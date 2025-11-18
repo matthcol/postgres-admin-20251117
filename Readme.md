@@ -53,6 +53,22 @@ ss -plantu
 ### Privilèges
 https://www.postgresql.org/docs/current/sql-grant.html
 
+## Variable spéciales triggers
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `NEW` | RECORD | Nouvelle ligne (INSERT/UPDATE) |
+| `OLD` | RECORD | Ancienne ligne (UPDATE/DELETE) |
+| `TG_NAME` | TEXT | Nom du trigger |
+| `TG_WHEN` | TEXT | BEFORE, AFTER ou INSTEAD OF |
+| `TG_LEVEL` | TEXT | ROW ou STATEMENT |
+| `TG_OP` | TEXT | INSERT, UPDATE, DELETE, TRUNCATE |
+| `TG_RELID` | OID | OID de la table |
+| `TG_TABLE_NAME` | TEXT | Nom de la table |
+| `TG_TABLE_SCHEMA` | TEXT | Schéma de la table |
+| `TG_NARGS` | INTEGER | Nombre d'arguments |
+| `TG_ARGV[]` | TEXT[] | Tableau des arguments |
+
 
 
 
