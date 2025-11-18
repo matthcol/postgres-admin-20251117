@@ -1,7 +1,12 @@
+-- user: movie, db : dbmovie
+
+-- sequence + fonctions associées
+
 select nextval('movie_id_seq');
 select currval('movie_id_seq');
 select setval('movie_id_seq', 8079260);
 
+-- sequence + clause identity
 create table toto.personnage(
 	id_perso int 
 		generated always as identity(
@@ -50,16 +55,25 @@ create table logs.log(
 
 -- fonction trigger
 create or replace function movie.fn_log_movie_update() returns trigger
+SECURITY DEFINER -- en tant que movie
 as $$
+declare
+	v_movie_id int;
 begin
+	RAISE NOTICE 'Opération: %', TG_OP;
+	if tg_op = 'DELETE' then
+		v_movie_id = OLD.id;
+	else
+		v_movie_id = NEW.id;
+	end if;
 	insert into logs.log (username, when_action, movie_id, action)
-		values (current_user, CURRENT_TIMESTAMP::timestamp, NEW.id, 'INSERT');
+		values (session_user, CURRENT_TIMESTAMP::timestamp, v_movie_id, TG_OP);
 	return new;
 end;
 $$ language plpgsql;
 
 create or replace trigger trg_log_movie_update
-after insert on movie.movie
+after insert or update or delete on movie.movie
 for each row
 execute function movie.fn_log_movie_update();
 
@@ -70,10 +84,113 @@ select
 	CURRENT_TIMESTAMP::timestamp -- i.e. without time zone / contraire: timestamptz 
 	;
 
+insert into movie (title, year) values ('Conjuring 2', 2025);
+
+select * from log;
+
+select * from movie where year = 2025;
+update movie set duration = 128 where id = 8079264;
+delete from movie where year = 2025;
+select * from log;
+
+select 
+	id,
+	TITLE,
+	YeAr
+from MoVie
+where year = 2025;
+
+create table toto."Lieu" (
+	"id_lieu" serial,
+	"Nom" varchar(150)
+);
+
+select * from lieu;
+select * from Lieu;
+select * from "Lieu";
+
+-- vue simplifiée des tables
+select * from pg_tables; 
+
+-- vue détaillée: colonne relkind = type d'objet
+--   table = 'r'
+--   index = 'i'
+--   sequence = 'S'
+--   view = 'v'
+select * from pg_class;
+
+select distinct relkind from pg_class;
+select * from pg_class where relkind = 'v';
 
 
+select * 
+from pg_class
+where relowner = (
+	select oid from pg_roles where rolname = 'movie'
+)
+order by relnamespace, relkind, relname;
+
+select * 
+from pg_class
+where 
+	relkind = 'r'
+	and relowner = (
+		select oid from pg_roles where rolname = 'movie'
+	)
+order by relnamespace, relkind, relname;
+
+-- table movie: relfilenode=34050 
+vacuum full movie;
+-- table movie: relfilenode=34154 
+
+-- table play :relfilenode = 34064, 3.4M
+delete from play
+where actor_id % 2 = 0;
+
+vacuum play;
+vacuum full play; -- NB: table verouillée
+-- table play :relfilenode = 34162, 1.7M
 
 
+-- comparer la taille des fichiers tables et indexes de la table movie
+-- table movie ("34154"): 912K
+-- index pk_movie ("34159"): 48K
+-- index uniq_movie ("34160"): 64K
+
+select * 
+from pg_class
+where 
+	relkind in ('r', 'i')
+	and relowner = (
+		select oid from pg_roles where rolname = 'movie'
+	)
+order by relnamespace, relkind, relname;
+
+-- apres suppression du fichier d'index pk_movie: 34159 
+select * from movie where year = 1984;
+-- ERROR:  could not open file "base/34038/34159": No such file or directory
+
+select * from person limit 10;
+
+reindex index pk_movie;
+-- fichier d'index recréé: "34166"
+
+
+select 4 + 34.2;
+select 4 + 'toto';
+
+select * 
+from movie
+where title like '%Terminator%';
+
+select * 
+from movie
+where title ilike '%terminator%';
+
+-- regexp POSIX
+select *
+from movie
+where title ~* 'terminator [0-9]+';
 
 
 

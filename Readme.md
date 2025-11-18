@@ -69,7 +69,15 @@ https://www.postgresql.org/docs/current/sql-grant.html
 | `TG_NARGS` | INTEGER | Nombre d'arguments |
 | `TG_ARGV[]` | TEXT[] | Tableau des arguments |
 
-
+## Types, opérateurs et fonctions
+- numériques: 
+    * opérateurs spécifiques %, ^, @, |/
+- textes:
+    * concaténation: opérateur || ou fonction CONCAT
+    * comparaison classique LIKE (CS) ou ILIKE (CI)
+    * comparaison avec regexp:  SIMILAR (standard SQL) ou opérateurs ~ ~* (POSIX)
+- valeurs nulles: NULLIF, COALESCE
+- date-heures: 
 
 
 
