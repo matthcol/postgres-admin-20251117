@@ -78,6 +78,43 @@ https://www.postgresql.org/docs/current/sql-grant.html
     * comparaison avec regexp:  SIMILAR (standard SQL) ou opérateurs ~ ~* (POSIX)
 - valeurs nulles: NULLIF, COALESCE
 - date-heures: 
+    * postgresql.conf : timezone = 'Europe/Paris'
+
+## Import, Export, Backup
+### Copy
+En psql: \copy (local client) ou COPY (serveur + droit) avec format csv, tsv
+
+\copy movie to 'movie.tsv' DELIMITER E'\t' CSV HEADER ENCODING 'UTF-8';
+
+\copy (select * from movie where year = 1984)  to 'movie-1984.tsv' DELIMITER E'\t' CSV HEADER ENCODING 'UTF-8';
+
+### Dump
+Outils: pg_dump (1 base), pg_dumpall (toute base et/ou users)
+
+pg_dump -U movie -d dbmovie 
+    -a : data only
+    -s : ddl only
+    -t : liste de tables
+    -n : schema
+
+pg_dump -U movie -d dbmovie -s -t movie -f movie-ddl.
+pg_dump -U movie -d dbmovie -a -t movie -f movie-data.sql
+pg_dump -U movie -d dbmovie  -t movie -f movie-ddl-data.sql
+pg_dump -U movie -d dbmovie -a  --inserts -t movie -f movie-data-i.sql 
+
+psql -U movie -d dbmovie_dev -f movie-ddl-data.sql
+psql -U movie -d dbmovie_dev
+    truncate movie;
+
+    \copy movie FROM 'movie-1984.tsv' CSV HEADER DELIMITER E'\t' ENCODING 'UTF-8'
+
+Export du schema movie en format PG:
+pg_dump -U movie -d dbmovie -n movie -F c -f schema-movie-dump.custom
+pg_dump -U movie -d dbmovie -n movie -F t -f schema-movie-dump.tar
+pg_dump -U movie -d dbmovie -n movie -F d -f schema-movie-dump-dir
+
+
+
 
 
 

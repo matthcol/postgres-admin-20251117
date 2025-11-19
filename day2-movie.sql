@@ -192,6 +192,75 @@ select *
 from movie
 where title ~* 'terminator [0-9]+';
 
+select 
+	current_time,
+	current_date,
+	CURRENT_TIMESTAMP,
+	CURRENT_TIMESTAMP::timestamp, -- i.e. without time zone / contraire: timestamptz 
+	localtimestamp,
+	CURRENT_TIMESTAMP::date
+	;
+
+show datestyle;
+
+select *
+from person
+where birthdate between '1974-01-01' and '2034-12-31';
+
+select *
+from person
+where birthdate between '01/02/1974' and '31/12/2034'
+order by birthdate;
+
+select *
+from person
+where birthdate between '01/02/1974'::date and '31/12/2034'::date
+order by birthdate;
+
+-- liste des collations
+select *  from pg_collation;
+select *  from pg_collation where collname like '%fr%';
+show lc_time; -- "French_France.1252"
+
+select 
+	to_char(current_timestamp, 'TMday DD TMmonth YYYY HH24:MI:SS')
+; -- "mardi 18 novembre 2025 15:04:49"
+
+select
+	name,
+	birthdate,
+	current_date - birthdate as delta_days,
+	localtimestamp - birthdate::timestamp as delta_seconds,
+	current_timestamp - '7 days 3 hours'::interval
+from person
+where name in (
+	'Clint Eastwood',
+	'James Cameron',
+	'Arnold Schwarzenegger',
+	'Grace Kelly'
+);
+
+
+select * from person
+where extract(month from birthdate) = 10;
+
+select * from person
+where date_part('month', birthdate) = 10;
+
+select name
+from person
+where name ~* '^r[eé]n[eé]'
+order by name; -- collation fr
+
+insert into toto.personnage (nom) values
+	('mañana'),
+	('matador'),
+	('mano');
+
+select * from personnage order by nom;
+
+select *  from pg_collation where collname like '%es%';
+select * from personnage order by nom COLLATE "es-ES-x-icu";
 
 
 
