@@ -80,7 +80,8 @@ https://www.postgresql.org/docs/current/sql-grant.html
 - date-heures: 
     * postgresql.conf : timezone = 'Europe/Paris'
 
-## Import, Export, Backup
+## Import, Export, Backup, Restore
+https://www.postgresql.org/docs/18/backup.html
 ### Copy
 En psql: \copy (local client) ou COPY (serveur + droit) avec format csv, tsv
 
@@ -90,31 +91,95 @@ En psql: \copy (local client) ou COPY (serveur + droit) avec format csv, tsv
 
 ### Dump
 Outils: pg_dump (1 base), pg_dumpall (toute base et/ou users)
-
+```
 pg_dump -U movie -d dbmovie 
     -a : data only
     -s : ddl only
     -t : liste de tables
     -n : schema
+```
 
+Exemples:
+```
 pg_dump -U movie -d dbmovie -s -t movie -f movie-ddl.
 pg_dump -U movie -d dbmovie -a -t movie -f movie-data.sql
 pg_dump -U movie -d dbmovie  -t movie -f movie-ddl-data.sql
 pg_dump -U movie -d dbmovie -a  --inserts -t movie -f movie-data-i.sql 
+```
 
+Jouer un dump:
+```
 psql -U movie -d dbmovie_dev -f movie-ddl-data.sql
 psql -U movie -d dbmovie_dev
     truncate movie;
 
     \copy movie FROM 'movie-1984.tsv' CSV HEADER DELIMITER E'\t' ENCODING 'UTF-8'
+```
 
 Export du schema movie en format PG:
+```
 pg_dump -U movie -d dbmovie -n movie -F c -f schema-movie-dump.custom
 pg_dump -U movie -d dbmovie -n movie -F t -f schema-movie-dump.tar
 pg_dump -U movie -d dbmovie -n movie -F d -f schema-movie-dump-dir
+```
 
+Restauration du schema movie:
+```
+pg_restore -U postgres -d dbmovie_dev schema-movie-dump.custom
+```
 
+Listing du contenu du dump:
+```
+pg_restore -l schema-movie-dump.custom
+```
 
+NB: pour faire du remap de schema, utiliser sed (avant) ou alter schema ... rename après
+
+### Archivage des WAL
+Voir postgresql.conf:
+```
+wal_level = replica	
+archive_mode = on	
+archive_command = 'copy %p c:\\Backup\\%f'	
+```
+
+Pour générer de la journalisation import d'1 gros volume de donnée:
+```
+psql -U postgres -d dbmoviebig 
+    \i sql-init-bigdb/01-tables.sql 
+    \copy media from 'media.tsv' DELIMITER E'\t' CSV HEADER ENCODING 'UTF-8';
+```
+
+## Indexes et plan d'exécution
+- Implicites: contrainte UNIQUE (inclus PRIMARY KEY)
+    NB: ils ne sont pas visibles dans l'arborescence de pgadmin4
+- Explicites: CREATE INDEX
+
+Plan optimisation:
+- étudie le plan d'exécution (explain ou explain analyze)
+- réecriture logique : sous-requete, ordre des jointures (externe)
+- ajout des indexes
+
+## Extension pg_stat_statements
+Réglages dans postgresql.conf:
+
+```
+track_counts = on # peut suffire
+```
+
+Config détaillée:
+```
+pg_stat_statements.track = top  # none, top, all (inclus ds le code stocké et les fonctions) 
+pg_stat_statements.max = 10000 # nb requetes suivies (les + suivies)
+pg_stat_statements.track_utility = off # on/off (off: DML only)
+pg_stat_statements.save = on # sauvegarde disque à l'arrêt
+```
+
+## Sessions, Transactions, Verrous
+
+Vues du catalogue: pg_stats_activity et pg_locks
+
+Voir: day3-dba.sql pour des exemples
 
 
 
